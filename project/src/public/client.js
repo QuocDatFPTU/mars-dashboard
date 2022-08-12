@@ -45,6 +45,10 @@ const App = (state) => {
                     <div class="button-container">${renderMenu(state)}</div>
                 </div>
             </div>
+            <footer>
+                <div class="credits">Icons made by <a href="https://www.flaticon.com/authors/monkik" title="monkik">monkik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+                </div>
+            <footer>
         `)
     } else {
         // check if "currentRover" has a value and render images
@@ -62,6 +66,10 @@ const App = (state) => {
                 <h1 class="title">Discover everything to know about <span>${state.get('currentRover').photos[0].rover.name}</span></h1>		
                 <div class="gallery">${renderImages(state)}</div>
             </div>
+            <footer>
+                <div class="credits">Icons made by <a href="https://www.flaticon.com/authors/monkik" title="monkik">monkik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+                </div>
+            <footer>
         `)
     }
 }
@@ -120,6 +128,19 @@ const renderImages = (state) => {
 }
 
 // Pure function that renders infomation requested from the backend
+const ImageOfTheDay = (state) => {
+    if (!state.get('apod')) {
+        getImageOfTheDay(store)
+    } else if (state.get('apod').image.media_type === "video") {
+        // fallback in case the image of the day is a video
+        return `https://apod.nasa.gov/apod/image/2102/Siemiony_las_31_01_2021_1024.jpg`
+
+    } else {
+        return (`
+            ${state.get('apod').image.url}
+        `)
+    }
+}
 
 // ------------------------------------------------------  HANDLE CLICK   ------------------------------------------------------
 
@@ -155,6 +176,15 @@ const capitalize = word => {
 
 // ------------------------------------------------------  API CALLS   ------------------------------------------------------
 
+//API call to get astronomy picture of the day 
+const getImageOfTheDay = async (state) => {
+    let { apod } = state;
+    const response = await fetch(`http://localhost:3000/apod`)
+    apod = await response.json() // get data from the promise returned by .json()
+    const newState = store.set('apod', apod);
+    updateStore(store, newState)
+    return apod;
+}
 
 
 // Request to the backend to get rovers data
@@ -164,7 +194,8 @@ const getRoverImages = async (roverName, state) => {
     // get data from the server
     const response = await fetch(`http://localhost:3000/rovers/${roverName}`) // get data or Response from the promise returned by fetch()
     currentRover = await response.json() // get data from the promise returned by .json()
-
+    console.log('type', typeof currentRover);
+    currentRover.photos.filter(data => data.sol === 1000);
     // set data from the server to Immutable 'currenRover'
     const newState = store.set('currentRover', currentRover);
     // updates the old state with the new information
